@@ -10,6 +10,9 @@ public class Snake : MonoBehaviour
     public float CollisionInterval = 0.2f;
     public Text hitpointText;
     public Player Player;
+    public ParticleSystem ParticleSystem;
+    public ParticleSystem BoomSystem;
+    public AudioPlayer AudioPlayer;
     public int Hitpoints { get; private set; }
 
     private List<Transform> snakeCircles = new List<Transform>();
@@ -19,9 +22,12 @@ public class Snake : MonoBehaviour
     void Start()
     {
         positions.Add(SnakeHead.position);
-        Hitpoints = 1;
-        AddCircle();
-
+        //Hitpoints = 1;
+        int startHitpoints = Progress.SnakeLength != -1 ? Progress.SnakeLength : Progress.InitialSnakeLength;
+        for (int i = 0; i < startHitpoints; i++)
+        {
+            AddCircle();
+        }
     }
 
     void Update()
@@ -49,7 +55,7 @@ public class Snake : MonoBehaviour
     public void AddCircle()
     {
         Hitpoints++;
-        hitpointText.text = Hitpoints.ToString();
+        hitpointText.text = (Hitpoints + 1).ToString();
         Transform circle = Instantiate(SnakeHead, positions[positions.Count - 1], Quaternion.identity, transform);
         snakeCircles.Add(circle);
         positions.Add(circle.position);
@@ -58,20 +64,20 @@ public class Snake : MonoBehaviour
     public void RemoveCircle()
     {
         int lastIndex = snakeCircles.Count - 1;
-
+        
         if (snakeCircles.Count == 0)
         {
-            //Çäåñü ïðîèãðûâàåì
+            //Ð—Ð´ÐµÑÑŒ Ð¿Ñ€Ð¾Ð¸Ð³Ñ€Ñ‹Ð²Ð°ÐµÐ¼
             Destroy(gameObject);
             Player.Die();
         }
         else
         {
             Hitpoints--;
-            hitpointText.text = Hitpoints.ToString();
+            hitpointText.text = (Hitpoints + 1).ToString();
             Destroy(snakeCircles[lastIndex].gameObject);
             snakeCircles.RemoveAt(lastIndex);
-            positions.RemoveAt(lastIndex + 1);
+            positions.RemoveAt(lastIndex+1);
         }
     }
 
@@ -84,7 +90,9 @@ public class Snake : MonoBehaviour
                 AddCircle();
             }
 
+            Progress.SnakeLength = Hitpoints;
             Destroy(other.gameObject);
+            AudioPlayer.TakeFoodAudio();
         }
     }
 
@@ -92,9 +100,15 @@ public class Snake : MonoBehaviour
     {
         if (collisionTimer <= 0 && other.gameObject.TryGetComponent(out Block block))
         {
+            ParticleSystem.Play();
             block.ApplyDamage();
             RemoveCircle();
             collisionTimer = CollisionInterval;
+            AudioPlayer.PlayAudio();
+
+            Progress.SnakeLength = Hitpoints;
+            if (block.Hitpoints == 0)
+                BoomSystem.Play();
         }
     }
 }
