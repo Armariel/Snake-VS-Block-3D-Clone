@@ -289,5 +289,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   amountText: {fileID: 1685853775}
-  minAmount: 1
-  maxAmount: 6
+  minAmount: 5
+  maxAmount: 10
